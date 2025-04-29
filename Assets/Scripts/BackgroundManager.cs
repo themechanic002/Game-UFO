@@ -3,7 +3,7 @@ using UnityEngine;
 public class BackgroundManager : MonoBehaviour
 {
     public GameObject backgroundPrefab; // 배경 프리팹
-    public float speed = 2f;            // 배경 이동 속도
+    public float speed = 1f;            // 배경 이동 속도
     public int backgroundCount = 2;     // 이어붙일 배경 개수
 
     private GameObject[] backgrounds;
