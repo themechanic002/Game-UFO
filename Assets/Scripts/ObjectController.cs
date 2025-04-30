@@ -10,7 +10,7 @@ public class ObjectController : MonoBehaviour
         transform.position += Vector3.left * speed * Time.deltaTime;
 
         // 화면 왼쪽 밖(-20f)으로 나가면 파괴
-        if (transform.position.x < -20f)
+        if (transform.position.x < -10f)
         {
             Destroy(gameObject);
         }
