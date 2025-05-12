@@ -4,12 +4,21 @@ using System;
 
 public class SpawnManager : MonoBehaviour
 {
-    public GameObject humanPrefab; // Human 프리팹
-    public float spawnInterval = 1f; // 생성 간격 (기본값 2초)
+    public GameObject malePrefab;    // 남성 프리팹
+    public GameObject femalePrefab;  // 여성 프리팹
+    public GameObject dogPrefab;     // 개 프리팹
+    public GameObject catPrefab;     // 고양이 프리팹
+
+    [Header("스폰 확률 설정")]
+    [Range(0, 1)] public float maleProbability = 0.3f;    // 남성 스폰 확률
+    [Range(0, 1)] public float femaleProbability = 0.3f;  // 여성 스폰 확률
+    [Range(0, 1)] public float dogProbability = 0.2f;     // 개 스폰 확률
+    [Range(0, 1)] public float catProbability = 0.2f;     // 고양이 스폰 확률
+
+    public float spawnInterval = 1f; // 생성 간격 (기본값 1초)
 
     // ground Tag가 붙은 오브젝트 찾기
     private GameObject ground;
-
     private bool isSpawning = false;
 
     void Start()
@@ -21,6 +30,17 @@ public class SpawnManager : MonoBehaviour
         {
             Debug.LogError("Ground object not found! Make sure it has the 'Ground' tag.");
             return;
+        }
+
+        // 확률의 합이 1이 되도록 정규화
+        float totalProbability = maleProbability + femaleProbability + dogProbability + catProbability;
+        if (totalProbability != 1f)
+        {
+            Debug.LogWarning("확률의 합이 1이 되도록 자동으로 조정됩니다.");
+            maleProbability /= totalProbability;
+            femaleProbability /= totalProbability;
+            dogProbability /= totalProbability;
+            catProbability /= totalProbability;
         }
     }
 
@@ -45,19 +65,38 @@ public class SpawnManager : MonoBehaviour
 
     void SpawnObjectOnGround()
     {
-        float groundY = ground.transform.position.y; // Ground의 Y 좌표
-        float groundHeight = ground.transform.localScale.y; // Ground의 높이 (localScale.y 사용)
+        float groundY = ground.transform.position.y;
+        float groundHeight = ground.transform.localScale.y;
 
-        float humanHeight = humanPrefab.GetComponent<SpriteRenderer>().bounds.size.y; // Human의 높이
+        // 스폰할 프리팹 선택
+        GameObject prefabToSpawn = SelectRandomPrefab();
+        float objectHeight = prefabToSpawn.GetComponent<SpriteRenderer>().bounds.size.y;
 
-        // Human의 피벗이 중앙이면, 바닥에 딱 맞추려면
-        float spawnY = groundY + (groundHeight / 2) + (humanHeight / 2);
-
+        float spawnY = groundY + (groundHeight / 2) + (objectHeight / 2);
         Vector3 cameraPos = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, 0));
-
-        // 스폰 위치 결정 (x는 원하는 위치, y는 계산된 값)
         Vector3 spawnPos = new Vector3(cameraPos.x, spawnY, 0);
 
-        Instantiate(humanPrefab, spawnPos, Quaternion.identity);
+        Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+    }
+
+    private GameObject SelectRandomPrefab()
+    {
+        float random = UnityEngine.Random.value;
+        float cumulativeProbability = 0f;
+
+        // 남성 프리팹
+        cumulativeProbability += maleProbability;
+        if (random <= cumulativeProbability) return malePrefab;
+
+        // 여성 프리팹
+        cumulativeProbability += femaleProbability;
+        if (random <= cumulativeProbability) return femalePrefab;
+
+        // 개 프리팹
+        cumulativeProbability += dogProbability;
+        if (random <= cumulativeProbability) return dogPrefab;
+
+        // 고양이 프리팹
+        return catPrefab;
     }
 }

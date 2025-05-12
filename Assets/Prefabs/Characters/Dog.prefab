@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 4148081808267179538}
   - component: {fileID: 4920679108170426830}
   m_Layer: 0
-  m_Name: Human
+  m_Name: Dog
   m_TagString: Object
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

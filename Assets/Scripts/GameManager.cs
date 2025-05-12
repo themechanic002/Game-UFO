@@ -6,6 +6,8 @@ public class GameManager : MonoBehaviour
 {
     public SpawnManager spawnManager; // SpawnManager 스크립트 참조
 
+    bool isGameStarted = false; // 게임 시작 여부
+
     // 이벤트 정의
     public event EventHandler OnGameStart; // 게임 시작 이벤트
 
@@ -13,7 +15,10 @@ public class GameManager : MonoBehaviour
     {
         StartCoroutine(StartGameAfterAnimation());
 
-        OnGameStart += spawnManager.StartSpawning; // 이벤트 구독
+        isGameStarted = false; // 게임 시작 여부 초기화
+
+        // 이벤트 구독
+        OnGameStart += spawnManager.StartSpawning;
     }
 
     private IEnumerator StartGameAfterAnimation()
@@ -23,19 +28,8 @@ public class GameManager : MonoBehaviour
 
         // GameStartEvent();
         OnGameStart?.Invoke(this, EventArgs.Empty); // 이벤트 발생
+        isGameStarted = true; // 게임 시작 상태로 변경
         Debug.Log("GameStartEvent 호출됨!");
     }
 
-    void Update()
-    {
-        // 모바일 화면 터치 감지
-        if (Input.touchCount > 0)
-        {
-            Touch touch = Input.GetTouch(0);
-            if (touch.phase == TouchPhase.Began || Input.GetMouseButtonDown(0))
-            {
-
-            }
-        }
-    }
 }
