@@ -8,6 +8,7 @@ public class ObjectController : MonoBehaviour
 
     GameObject UFO; // UFO 오브젝트
     Vector3 ufoPosition; // 목표 위치
+    private AbductableObject abductableObject; // 애니메이션 컴포넌트
 
     bool suckedUp = false; // 흡입 여부
 
@@ -23,16 +24,14 @@ public class ObjectController : MonoBehaviour
         {
             ufoPosition = UFO.transform.position; // UFO의 위치 저장
         }
+
+        // AbductableObject 컴포넌트 추가
+        abductableObject = gameObject.AddComponent<AbductableObject>();
     }
 
     void Update()
     {
-        if (suckedUp)
-        {
-            // UFO 위치로 이동
-            transform.position = Vector3.MoveTowards(transform.position, ufoPosition, suckUpSpeed * Time.deltaTime);
-        }
-        else
+        if (!suckedUp)
         {
             // 왼쪽으로 이동
             transform.position += Vector3.left * speed * Time.deltaTime;
@@ -43,15 +42,13 @@ public class ObjectController : MonoBehaviour
         {
             Destroy(gameObject);
         }
-        else if (transform.position == ufoPosition)
-        {
-            Destroy(gameObject);
-        }
 
         if (isOnSuckUpPoint && ((Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) || Input.GetMouseButtonDown(0)))
         {
             Debug.Log("SuckUpPoint에 닿았고 클릭됨");
             suckedUp = true;
+            // 애니메이션 시작
+            abductableObject.StartAbduction(ufoPosition);
         }
     }
 

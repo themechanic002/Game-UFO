@@ -76,7 +76,13 @@ public class SpawnManager : MonoBehaviour
         Vector3 cameraPos = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, 0));
         Vector3 spawnPos = new Vector3(cameraPos.x, spawnY, 0);
 
-        Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+        GameObject spawnedObject = Instantiate(prefabToSpawn, spawnPos, Quaternion.identity);
+
+        // AbductableObject 컴포넌트 추가
+        if (spawnedObject.GetComponent<AbductableObject>() == null)
+        {
+            spawnedObject.AddComponent<AbductableObject>();
+        }
     }
 
     private GameObject SelectRandomPrefab()
