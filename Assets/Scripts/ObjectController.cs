@@ -11,6 +11,10 @@ public class ObjectController : MonoBehaviour
     GameObject UFO; // UFO 오브젝트
     Vector3 ufoPosition; // 목표 위치
     private AbductableObject abductableObject; // 애니메이션 컴포넌트
+    private AudioSource audioSource; // 오디오 소스 컴포넌트
+    private TextMeshProUGUI scoreText; // Score 텍스트 컴포넌트
+
+    [SerializeField] private AudioClip popSound; // Inspector에서 할당할 pop 효과음
 
     bool suckedUp = false; // 흡입 여부
     bool hasPassedUFO = false; // UFO를 지나쳤는지 여부
@@ -35,6 +39,24 @@ public class ObjectController : MonoBehaviour
 
         // AbductableObject 컴포넌트 추가
         abductableObject = gameObject.AddComponent<AbductableObject>();
+
+        // AudioSource 컴포넌트 추가
+        audioSource = gameObject.AddComponent<AudioSource>();
+        if (popSound != null)
+        {
+            audioSource.clip = popSound;
+        }
+        else
+        {
+            Debug.LogError("pop 효과음이 할당되지 않았습니다.");
+        }
+
+        // Score 텍스트 컴포넌트 찾기
+        scoreText = GameObject.Find("Score").GetComponent<TextMeshProUGUI>();
+        if (scoreText == null)
+        {
+            Debug.LogError("Score 텍스트를 찾을 수 없습니다.");
+        }
     }
 
     void Update()
@@ -65,6 +87,11 @@ public class ObjectController : MonoBehaviour
             ShowJudgment();
             // 애니메이션 시작
             abductableObject.StartAbduction(ufoPosition);
+            // pop 효과음 재생
+            if (audioSource != null && audioSource.clip != null)
+            {
+                audioSource.Play();
+            }
         }
     }
 
@@ -82,11 +109,15 @@ public class ObjectController : MonoBehaviour
             {
                 judgment = "Perfect!";
                 color = new Color(1f, 0.92f, 0.016f); // 노란색
+                FeverManager.Instance.OnPerfectJudgment();
+                UpdateScore(2); // Perfect일 때 2점
             }
             else
             {
                 judgment = "Good!";
                 color = new Color(0.2f, 0.8f, 0.2f); // 초록색
+                FeverManager.Instance.OnGoodJudgment();
+                UpdateScore(1); // Good일 때 1점
             }
         }
         else
@@ -94,9 +125,21 @@ public class ObjectController : MonoBehaviour
             // 납치 실패 시 Miss 판정
             judgment = "Miss";
             color = new Color(0.8f, 0.2f, 0.2f); // 빨간색
+            FeverManager.Instance.OnMissJudgment();
         }
 
         JudgmentManager.Instance.ShowJudgment(judgment, color);
+    }
+
+    // 점수 업데이트 함수
+    private void UpdateScore(int baseScore)
+    {
+        if (scoreText != null)
+        {
+            int currentScore = int.Parse(scoreText.text);
+            int scoreToAdd = FeverManager.Instance.IsFeverActive ? baseScore * 2 : baseScore;
+            scoreText.text = (currentScore + scoreToAdd).ToString();
+        }
     }
 
     // SuckPoint와 겹치기 시작할 때
