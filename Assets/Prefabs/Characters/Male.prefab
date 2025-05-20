@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 4343661747733492165}
   - component: {fileID: 4148081808267179538}
   - component: {fileID: 4920679108170426830}
-  - component: {fileID: -2260744354253459158}
   m_Layer: 0
   m_Name: Male
   m_TagString: Object
@@ -107,7 +106,6 @@ MonoBehaviour:
   destroyXPosition: -10
   perfectRange: 0.2
   goodRange: 0.5
-  popSound: {fileID: 8300000, guid: a528c56081951e9479b0c548fbc1711d, type: 3}
 --- !u!70 &4148081808267179538
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -172,15 +170,3 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!114 &-2260744354253459158
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8940228220788308699}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9474e41261581404986eb97005ce7973, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

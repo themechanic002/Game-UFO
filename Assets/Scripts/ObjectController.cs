@@ -19,16 +19,23 @@ public class ObjectController : MonoBehaviour
     [SerializeField] private float perfectRange = 0.2f;   // Perfect 판정 범위
     [SerializeField] private float goodRange = 0.5f;      // Good 판정 범위
 
+    [Header("흡입 애니메이션 설정")]
+    [SerializeField] private float abductionSpeed = 5f;   // 흡입 애니메이션 속도
+    [SerializeField] private float stretchFactor = 3f;    // 늘어나는 정도
+    [SerializeField] private float maxStretchHeight = 3f; // 최대 늘어나는 높이
+
     // 상태 변수
     private bool isOnSuckUpPoint = false;    // SuckUpPoint와 겹쳐있는지 여부
     private bool suckedUp = false;           // 흡입되었는지 여부
     private bool hasPassedUFO = false;       // UFO를 지나쳤는지 여부
     private bool hasShownMiss = false;       // Miss 판정을 표시했는지 여부
+    private bool isBeingAbducted = false;    // 흡입 애니메이션 중인지 여부
 
     // 참조 변수
     private GameObject UFO;                  // UFO 오브젝트
     private Vector3 ufoPosition;             // UFO의 위치
-    private AbductableObject abductableObject; // 애니메이션 컴포넌트
+    private Vector3 originalScale;           // 원래 크기
+    private Vector3 originalPosition;        // 원래 위치
     private TextMeshProUGUI scoreText;       // 점수 텍스트
     private SuckUpController suckUpController; // SuckUpController 참조
 
@@ -58,8 +65,10 @@ public class ObjectController : MonoBehaviour
             Debug.LogError("SuckUpController를 찾을 수 없습니다.");
         }
 
-        // 컴포넌트 초기화
-        abductableObject = gameObject.AddComponent<AbductableObject>();
+        // 원래 크기와 위치 저장
+        originalScale = transform.localScale;
+        originalPosition = transform.position;
+
         InitializeScore();
     }
 
@@ -228,6 +237,7 @@ public class ObjectController : MonoBehaviour
             Debug.Log("오브젝트 흡입을 시작합니다: " + gameObject.name);
             suckedUp = true;
             ShowJudgment();
+            StartAbduction(ufoPosition);
         }
         else
         {
@@ -235,5 +245,63 @@ public class ObjectController : MonoBehaviour
                      " (SuckUpPoint 겹침: " + isOnSuckUpPoint +
                      ", 이미 흡입됨: " + suckedUp + ")");
         }
+    }
+
+    /// <summary>
+    /// 흡입 애니메이션 시작
+    /// </summary>
+    private void StartAbduction(Vector3 ufoPosition)
+    {
+        if (!isBeingAbducted)
+        {
+            isBeingAbducted = true;
+            StartCoroutine(AbductionAnimation(ufoPosition));
+        }
+    }
+
+    /// <summary>
+    /// 흡입 애니메이션 코루틴
+    /// </summary>
+    private IEnumerator AbductionAnimation(Vector3 ufoPosition)
+    {
+        float elapsedTime = 0f;
+        Vector3 startPosition = transform.position;
+        Vector3 startScale = transform.localScale;
+
+        // UFO 위치를 약간 위로 조정
+        Vector3 targetPosition = ufoPosition + Vector3.up * 0.5f;
+
+        while (elapsedTime < 1f)
+        {
+            elapsedTime += Time.deltaTime * abductionSpeed;
+            float t = Mathf.Clamp01(elapsedTime);
+
+            // 위치 이동
+            transform.position = Vector3.Lerp(startPosition, targetPosition, t);
+
+            // 스케일 조정 (위로 늘어나는 효과)
+            float currentStretch = Mathf.Lerp(1f, stretchFactor, t);
+            float currentHeight = Mathf.Lerp(0f, maxStretchHeight, t);
+
+            transform.localScale = new Vector3(
+                originalScale.x / currentStretch,
+                originalScale.y * currentStretch,
+                originalScale.z
+            );
+
+            // 투명도 조정
+            SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
+            if (spriteRenderer != null)
+            {
+                Color color = spriteRenderer.color;
+                color.a = Mathf.Lerp(1f, 0.5f, t);
+                spriteRenderer.color = color;
+            }
+
+            yield return null;
+        }
+
+        // 애니메이션 완료 후 오브젝트 제거
+        Destroy(gameObject);
     }
 }
