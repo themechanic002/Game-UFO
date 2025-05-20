@@ -38,6 +38,7 @@ public class ObjectController : MonoBehaviour
     private Vector3 originalPosition;        // 원래 위치
     private TextMeshProUGUI scoreText;       // 점수 텍스트
     private SuckUpController suckUpController; // SuckUpController 참조
+    private GameManager gameManager;         // GameManager 참조
 
     void Start()
     {
@@ -63,6 +64,13 @@ public class ObjectController : MonoBehaviour
         if (suckUpController == null)
         {
             Debug.LogError("SuckUpController를 찾을 수 없습니다.");
+        }
+
+        // GameManager 찾기
+        gameManager = GameObject.FindObjectOfType<GameManager>();
+        if (gameManager == null)
+        {
+            Debug.LogError("GameManager를 찾을 수 없습니다.");
         }
 
         // 원래 크기와 위치 저장
@@ -224,6 +232,10 @@ public class ObjectController : MonoBehaviour
         {
             ShowJudgment();
             hasShownMiss = true;
+            if (gameManager != null)
+            {
+                gameManager.DecreaseLife();
+            }
         }
     }
 
