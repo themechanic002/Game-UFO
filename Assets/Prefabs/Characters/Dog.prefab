@@ -104,7 +104,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 5
-  suckUpSpeed: 20
+  destroyXPosition: -10
+  perfectRange: 0.2
+  goodRange: 0.5
   popSound: {fileID: 8300000, guid: a528c56081951e9479b0c548fbc1711d, type: 3}
 --- !u!70 &4148081808267179538
 CapsuleCollider2D:

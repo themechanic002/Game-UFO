@@ -1,61 +1,77 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
+/// <summary>
+/// 이동하는 오브젝트를 관리하는 컨트롤러
+/// - 오브젝트 이동
+/// - SuckUpPoint와의 상호작용
+/// - 판정 및 점수 처리
+/// </summary>
 public class ObjectController : MonoBehaviour
 {
-    private bool isOnSuckUpPoint = false;
-    public float speed = 5f; // 초기 이동 속도
-    public float suckUpSpeed = 55f; // 흡입 속도
+    [Header("이동 설정")]
+    [SerializeField] private float speed = 5f;            // 이동 속도
+    [SerializeField] private float destroyXPosition = -10f; // 파괴될 X 위치
 
-    GameObject UFO; // UFO 오브젝트
-    Vector3 ufoPosition; // 목표 위치
+    [Header("판정 설정")]
+    [SerializeField] private float perfectRange = 0.2f;   // Perfect 판정 범위
+    [SerializeField] private float goodRange = 0.5f;      // Good 판정 범위
+
+    // 상태 변수
+    private bool isOnSuckUpPoint = false;    // SuckUpPoint와 겹쳐있는지 여부
+    private bool suckedUp = false;           // 흡입되었는지 여부
+    private bool hasPassedUFO = false;       // UFO를 지나쳤는지 여부
+    private bool hasShownMiss = false;       // Miss 판정을 표시했는지 여부
+
+    // 참조 변수
+    private GameObject UFO;                  // UFO 오브젝트
+    private Vector3 ufoPosition;             // UFO의 위치
     private AbductableObject abductableObject; // 애니메이션 컴포넌트
-    private AudioSource audioSource; // 오디오 소스 컴포넌트
-    private TextMeshProUGUI scoreText; // Score 텍스트 컴포넌트
-
-    [SerializeField] private AudioClip popSound; // Inspector에서 할당할 pop 효과음
-
-    bool suckedUp = false; // 흡입 여부
-    bool hasPassedUFO = false; // UFO를 지나쳤는지 여부
-    bool hasShownMiss = false; // Miss 판정을 이미 표시했는지 여부
-
-    // 판정 관련 변수
-    private float perfectRange = 0.2f; // Perfect 판정 범위
-    private float goodRange = 0.5f; // Good 판정 범위
+    private TextMeshProUGUI scoreText;       // 점수 텍스트
+    private SuckUpController suckUpController; // SuckUpController 참조
 
     void Start()
     {
-        // UFO 오브젝트 찾기 (이름으로 찾기)
+        InitializeComponents();
+    }
+
+    /// <summary>
+    /// 필요한 컴포넌트들을 초기화
+    /// </summary>
+    private void InitializeComponents()
+    {
+        // UFO 오브젝트 찾기
         UFO = GameObject.Find("UFO");
         if (UFO == null)
         {
             Debug.LogError("UFO 오브젝트를 찾을 수 없습니다.");
+            return;
         }
-        else
+        ufoPosition = UFO.transform.position;
+
+        // SuckUpController 찾기
+        suckUpController = GameObject.FindObjectOfType<SuckUpController>();
+        if (suckUpController == null)
         {
-            ufoPosition = UFO.transform.position; // UFO의 위치 저장
+            Debug.LogError("SuckUpController를 찾을 수 없습니다.");
         }
 
-        // AbductableObject 컴포넌트 추가
+        // 컴포넌트 초기화
         abductableObject = gameObject.AddComponent<AbductableObject>();
+        InitializeScore();
+    }
 
-        // AudioSource 컴포넌트 추가
-        audioSource = gameObject.AddComponent<AudioSource>();
-        if (popSound != null)
-        {
-            audioSource.clip = popSound;
-        }
-        else
-        {
-            Debug.LogError("pop 효과음이 할당되지 않았습니다.");
-        }
-
-        // Score 텍스트 컴포넌트 찾기
-        scoreText = GameObject.Find("Score").GetComponent<TextMeshProUGUI>();
+    /// <summary>
+    /// 점수 텍스트 컴포넌트 초기화
+    /// </summary>
+    private void InitializeScore()
+    {
+        scoreText = GameObject.Find("Score")?.GetComponent<TextMeshProUGUI>();
         if (scoreText == null)
         {
-            Debug.LogError("Score 텍스트를 찾을 수 없습니다.");
+            Debug.LogError("점수 텍스트를 찾을 수 없습니다.");
         }
     }
 
@@ -63,39 +79,46 @@ public class ObjectController : MonoBehaviour
     {
         if (!suckedUp)
         {
-            // 왼쪽으로 이동
-            transform.position += Vector3.left * speed * Time.deltaTime;
-
-            // UFO를 지나쳤는지 체크 (납치되지 않은 상태에서만)
-            if (!hasPassedUFO && transform.position.x < ufoPosition.x)
-            {
-                hasPassedUFO = true;
-            }
+            MoveObject();
+            CheckPassedUFO();
         }
 
-        // 화면 왼쪽 밖(-20f)으로 나가면 파괴
-        if (transform.position.x < -10f)
-        {
-            Destroy(gameObject);
-        }
+        CheckDestroyCondition();
+    }
 
-        if (isOnSuckUpPoint && ((Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) || Input.GetMouseButtonDown(0)))
+    /// <summary>
+    /// 오브젝트를 왼쪽으로 이동
+    /// </summary>
+    private void MoveObject()
+    {
+        transform.position += Vector3.left * speed * Time.deltaTime;
+    }
+
+    /// <summary>
+    /// UFO를 지나쳤는지 확인
+    /// </summary>
+    private void CheckPassedUFO()
+    {
+        if (!hasPassedUFO && transform.position.x < ufoPosition.x)
         {
-            Debug.Log("SuckUpPoint에 닿았고 클릭됨");
-            suckedUp = true;
-            // 판정 계산 및 표시
-            ShowJudgment();
-            // 애니메이션 시작
-            abductableObject.StartAbduction(ufoPosition);
-            // pop 효과음 재생
-            if (audioSource != null && audioSource.clip != null)
-            {
-                audioSource.Play();
-            }
+            hasPassedUFO = true;
         }
     }
 
-    // 판정 계산 및 표시
+    /// <summary>
+    /// 오브젝트가 파괴되어야 하는지 확인
+    /// </summary>
+    private void CheckDestroyCondition()
+    {
+        if (transform.position.x < destroyXPosition)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    /// <summary>
+    /// 판정을 계산하고 표시
+    /// </summary>
     private void ShowJudgment()
     {
         string judgment;
@@ -103,35 +126,43 @@ public class ObjectController : MonoBehaviour
 
         if (suckedUp)
         {
-            // 납치 성공 시 판정
-            float distance = Mathf.Abs(transform.position.x - ufoPosition.x);
-            if (distance <= perfectRange)
-            {
-                judgment = "Perfect!";
-                color = new Color(1f, 0.92f, 0.016f); // 노란색
-                FeverManager.Instance.OnPerfectJudgment();
-                UpdateScore(2); // Perfect일 때 2점
-            }
-            else
-            {
-                judgment = "Good!";
-                color = new Color(0.2f, 0.8f, 0.2f); // 초록색
-                FeverManager.Instance.OnGoodJudgment();
-                UpdateScore(1); // Good일 때 1점
-            }
+            CalculateSuccessJudgment(out judgment, out color);
         }
         else
         {
-            // 납치 실패 시 Miss 판정
             judgment = "Miss";
-            color = new Color(0.8f, 0.2f, 0.2f); // 빨간색
+            color = new Color(0.8f, 0.2f, 0.2f);
             FeverManager.Instance.OnMissJudgment();
         }
 
         JudgmentManager.Instance.ShowJudgment(judgment, color);
     }
 
-    // 점수 업데이트 함수
+    /// <summary>
+    /// 성공 판정(Perfect/Good) 계산
+    /// </summary>
+    private void CalculateSuccessJudgment(out string judgment, out Color color)
+    {
+        float distance = Mathf.Abs(transform.position.x - ufoPosition.x);
+        if (distance <= perfectRange)
+        {
+            judgment = "Perfect!";
+            color = new Color(1f, 0.92f, 0.016f);
+            FeverManager.Instance.OnPerfectJudgment();
+            UpdateScore(2);
+        }
+        else
+        {
+            judgment = "Good!";
+            color = new Color(0.2f, 0.8f, 0.2f);
+            FeverManager.Instance.OnGoodJudgment();
+            UpdateScore(1);
+        }
+    }
+
+    /// <summary>
+    /// 점수 업데이트
+    /// </summary>
     private void UpdateScore(int baseScore)
     {
         if (scoreText != null)
@@ -142,30 +173,67 @@ public class ObjectController : MonoBehaviour
         }
     }
 
-    // SuckPoint와 겹치기 시작할 때
+    /// <summary>
+    /// SuckUpPoint와 겹치기 시작할 때 호출
+    /// </summary>
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("SuckUpPoint"))
         {
-            Debug.Log("SuckUpPoint에 닿음");
             isOnSuckUpPoint = true;
+            if (suckUpController != null && !SuckUpController.IsInCooldown())
+            {
+                suckUpController.currentObject = gameObject;
+            }
+            Debug.Log("오브젝트가 SuckUpPoint와 겹치기 시작했습니다: " + gameObject.name);
         }
     }
 
-    // SuckPoint에서 벗어날 때
+    /// <summary>
+    /// SuckUpPoint에서 벗어날 때 호출
+    /// </summary>
     private void OnTriggerExit2D(Collider2D other)
     {
         if (other.CompareTag("SuckUpPoint"))
         {
-            Debug.Log("SuckUpPoint에서 벗어남");
             isOnSuckUpPoint = false;
-
-            // UFO를 지나쳤고 아직 Miss 판정을 표시하지 않았다면
-            if (hasPassedUFO && !hasShownMiss && !suckedUp)
+            if (suckUpController != null && suckUpController.currentObject == gameObject)
             {
-                ShowJudgment();
-                hasShownMiss = true;
+                suckUpController.currentObject = null;
             }
+            Debug.Log("오브젝트가 SuckUpPoint에서 벗어났습니다: " + gameObject.name);
+            CheckMissJudgment();
+        }
+    }
+
+    /// <summary>
+    /// Miss 판정 확인
+    /// </summary>
+    private void CheckMissJudgment()
+    {
+        if (hasPassedUFO && !hasShownMiss && !suckedUp)
+        {
+            ShowJudgment();
+            hasShownMiss = true;
+        }
+    }
+
+    /// <summary>
+    /// 흡입 시작
+    /// </summary>
+    public void StartSucking()
+    {
+        if (isOnSuckUpPoint && !suckedUp)
+        {
+            Debug.Log("오브젝트 흡입을 시작합니다: " + gameObject.name);
+            suckedUp = true;
+            ShowJudgment();
+        }
+        else
+        {
+            Debug.Log("오브젝트를 흡입할 수 없습니다: " + gameObject.name +
+                     " (SuckUpPoint 겹침: " + isOnSuckUpPoint +
+                     ", 이미 흡입됨: " + suckedUp + ")");
         }
     }
 }
