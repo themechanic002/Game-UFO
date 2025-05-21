@@ -35,12 +35,16 @@ public class SuckUpController : MonoBehaviour
     private bool isSucking = false;                     // 흡입 상태
     private float currentPopPitch = 0.5f;              // 현재 pop 효과음의 pitch
     private int perfectCount = 0;                      // 연속 perfect 횟수
-    private const float MAX_POP_PITCH = 1.5f;          // 최대 pitch 값
-    private const float PITCH_INCREMENT = 0.1f;        // pitch 증가량
+    private const float MIN_POP_PITCH = 0.5f;          // 최소 pitch 값
+    private const float MAX_POP_PITCH = 1.4f;          // 최대 pitch 값
+    private const int MAX_PERFECT_COUNT = 10;          // 최대 perfect 연속 횟수
+    private float pitchStep;                           // pitch 증가 단위
 
     void Start()
     {
         InitializeComponents();
+        // pitch 증가 단위 계산
+        pitchStep = (MAX_POP_PITCH - MIN_POP_PITCH) / MAX_PERFECT_COUNT;
     }
 
     /// <summary>
@@ -295,9 +299,9 @@ public class SuckUpController : MonoBehaviour
     public void OnPerfect()
     {
         perfectCount++;
-        if (perfectCount <= 10)
+        if (perfectCount <= MAX_PERFECT_COUNT)
         {
-            currentPopPitch = Mathf.Min(0.5f + (perfectCount * PITCH_INCREMENT), MAX_POP_PITCH);
+            currentPopPitch = MIN_POP_PITCH + (pitchStep * perfectCount);
         }
     }
 
@@ -307,7 +311,7 @@ public class SuckUpController : MonoBehaviour
     public void OnGood()
     {
         perfectCount = 0;
-        currentPopPitch = 0.5f;
+        currentPopPitch = MIN_POP_PITCH;
     }
 
     /// <summary>
@@ -316,6 +320,6 @@ public class SuckUpController : MonoBehaviour
     public void OnMiss()
     {
         perfectCount = 0;
-        currentPopPitch = 0.5f;
+        currentPopPitch = MIN_POP_PITCH;
     }
 }
