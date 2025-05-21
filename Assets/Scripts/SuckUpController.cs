@@ -33,6 +33,10 @@ public class SuckUpController : MonoBehaviour
     private AudioSource audioSource;                    // 오디오 소스
     public GameObject currentObject;                    // 현재 흡입 중인 오브젝트
     private bool isSucking = false;                     // 흡입 상태
+    private float currentPopPitch = 0.5f;              // 현재 pop 효과음의 pitch
+    private int perfectCount = 0;                      // 연속 perfect 횟수
+    private const float MAX_POP_PITCH = 1.5f;          // 최대 pitch 값
+    private const float PITCH_INCREMENT = 0.1f;        // pitch 증가량
 
     void Start()
     {
@@ -280,7 +284,38 @@ public class SuckUpController : MonoBehaviour
     {
         if (audioSource != null && popSound != null)
         {
+            audioSource.pitch = currentPopPitch;
             audioSource.PlayOneShot(popSound);
         }
+    }
+
+    /// <summary>
+    /// Perfect 판정 시 pitch 증가
+    /// </summary>
+    public void OnPerfect()
+    {
+        perfectCount++;
+        if (perfectCount <= 10)
+        {
+            currentPopPitch = Mathf.Min(0.5f + (perfectCount * PITCH_INCREMENT), MAX_POP_PITCH);
+        }
+    }
+
+    /// <summary>
+    /// Good 판정 시 pitch 유지
+    /// </summary>
+    public void OnGood()
+    {
+        perfectCount = 0;
+        currentPopPitch = 0.5f;
+    }
+
+    /// <summary>
+    /// Miss 판정 시 pitch 초기화
+    /// </summary>
+    public void OnMiss()
+    {
+        perfectCount = 0;
+        currentPopPitch = 0.5f;
     }
 }

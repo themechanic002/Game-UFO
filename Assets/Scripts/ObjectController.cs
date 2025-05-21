@@ -150,6 +150,10 @@ public class ObjectController : MonoBehaviour
             judgment = "Miss";
             color = new Color(0.8f, 0.2f, 0.2f);
             FeverManager.Instance.OnMissJudgment();
+            if (suckUpController != null)
+            {
+                suckUpController.OnMiss();
+            }
         }
 
         JudgmentManager.Instance.ShowJudgment(judgment, color);
@@ -166,6 +170,10 @@ public class ObjectController : MonoBehaviour
             judgment = "Perfect!";
             color = new Color(1f, 0.92f, 0.016f);
             FeverManager.Instance.OnPerfectJudgment();
+            if (suckUpController != null)
+            {
+                suckUpController.OnPerfect();
+            }
             UpdateScore(2);
         }
         else
@@ -173,6 +181,10 @@ public class ObjectController : MonoBehaviour
             judgment = "Good!";
             color = new Color(0.2f, 0.8f, 0.2f);
             FeverManager.Instance.OnGoodJudgment();
+            if (suckUpController != null)
+            {
+                suckUpController.OnGood();
+            }
             UpdateScore(1);
         }
     }

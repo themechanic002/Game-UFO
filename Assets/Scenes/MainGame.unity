@@ -898,7 +898,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ae8cde8a28dfe9543b91c57caec11b9a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cooldownSound: {fileID: 0}
+  cooldownSound: {fileID: 8300000, guid: 73545164e5b02064bb2c00486ca0ee99, type: 3}
   popSound: {fileID: 8300000, guid: a528c56081951e9479b0c548fbc1711d, type: 3}
   suckUpSpeed: 55
   currentObject: {fileID: 0}
